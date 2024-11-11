@@ -10,7 +10,7 @@ import { user, chat, User, reservation } from "./schema";
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
-let client = postgres(`${process.env.POSTGRES_URL!}?sslmode=require`);
+let client = postgres(`${process.env.POSTGRES_URL!}`);
 let db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
@@ -95,6 +95,61 @@ export async function getChatById({ id }: { id: string }) {
     return selectedChat;
   } catch (error) {
     console.error("Failed to get chat by id from database");
+    throw error;
+  }
+}
+
+export async function deleteMessageByRow(chatId: string, rowIndex: number) {
+  try {
+    const chatData = await getChatById({ id: chatId });
+
+    if (chatData) {
+      const updatedMessages = chatData.messages.filter(
+        (_: Message, index: number) => index !== rowIndex,
+      );
+
+      await db
+        .update(chat)
+        .set({ messages: JSON.stringify(updatedMessages) })
+        .where(eq(chat.id, chatId));
+
+      return updatedMessages;
+    }
+
+    throw new Error("Chat not found");
+  } catch (error) {
+    console.error("Failed to delete message by row");
+    throw error;
+  }
+}
+
+export async function editMessageByRow(
+  chatId: string,
+  rowIndex: number,
+  newContent: string,
+) {
+  try {
+    const chatData = await getChatById({ id: chatId });
+
+    if (chatData) {
+      const updatedMessages = chatData.messages.map((message, index) => {
+        if (index === rowIndex && message.role !== "resetcontext") {
+          return { ...message, content: newContent };
+        }
+        return message;
+      });
+
+      await db
+        .update(chat)
+        .set({ messages: JSON.stringify(updatedMessages) })
+        .where(eq(chat.id, chatId));
+
+      return updatedMessages;
+    }
+
+    throw new Error("Chat not found");
+  } catch (error) {
+    console.error("Failed to edit message by row");
     throw error;
   }
 }

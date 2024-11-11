@@ -1,7 +1,7 @@
 import { convertToCoreMessages, Message, streamText } from "ai";
 import { z } from "zod";
 
-import { geminiProModel } from "@/ai";
+import { geminiFlashModel } from "@/ai";
 import {
   generateReservationPrice,
   generateSampleFlightSearchResults,
@@ -18,6 +18,8 @@ import {
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
 
+const blibliAPI = "http://103.127.135.182:8000";
+
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =
     await request.json();
@@ -31,30 +33,86 @@ export async function POST(request: Request) {
   const coreMessages = convertToCoreMessages(messages).filter(
     (message) => message.content.length > 0,
   );
+  // Menemukan indeks dari 'resetcontext' terakhir
+  const lastResetIndex = coreMessages
+    .map((message) => message.content)
+    .lastIndexOf("resetcontext");
+
+  // Jika 'resetcontext' terakhir ditemukan, mulai dari pesan setelahnya
+  const relevantMessages =
+    lastResetIndex >= 0 ? coreMessages.slice(lastResetIndex + 1) : coreMessages;
+  console.log(relevantMessages);
+
+  // Cek apakah pesan terakhir adalah 'resetcontext' untuk menghentikan eksekusi model
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage && lastMessage.content === "resetcontext") {
+    console.log("Konteks telah di-reset.");
+    return new Response("Konteks telah di-reset", { status: 200 });
+  }
 
   const result = await streamText({
-    model: geminiProModel,
+    model: geminiFlashModel,
     system: `\n
-        - you help users book flights!
-        - keep your responses limited to a sentence.
-        - DO NOT output lists.
-        - after every tool call, pretend you're showing the result to the user and keep your response limited to a phrase.
-        - today's date is ${new Date().toLocaleDateString()}.
-        - ask follow up questions to nudge user into the optimal flow
-        - ask for any details you don't know, like name of passenger, etc.'
-        - C and D are aisle seats, A and F are window seats, B and E are middle seats
-        - assume the most popular airports for the origin and destination
-        - here's the optimal flow
-          - search for flights
-          - choose flight
-          - select seats
-          - create reservation (ask user whether to proceed with payment or change reservation)
-          - authorize payment (requires user consent, wait for user to finish payment and let you know when done)
-          - display boarding pass (DO NOT display boarding pass without verifying payment)
-        '
+ # System Prompt for E-Commerce Analytics Assistant - CIP-CIP
+
+You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main role is to deliver data-driven insights, actionable recommendations, and analyses. Here’s how to operate effectively:
+
+## Core Identity
+- **Name:** CIP-CIP
+- **Role:** E-commerce Analytics Expert
+
+## Interaction Guidelines
+- **Response Format:** Provide responses in bullet points or tables for clarity. If necessary, use an alternative format.
+- **Marketing Insights:** Include relevant marketing insights in your analyses to aid user decision-making and support in-depth data analysis.
+- **Analytical Capability:** Perform analyses in every response where applicable. Highlight trends, patterns, or insights derived from the provided data.
+- **Clarifications:** Only request clarification if the provided information is insufficient.
+- **Task Execution:** Proceed with the task directly if all necessary information is available.
+- **Default Page:** If the user doesn’t specify a page, default to page 1 and avoid further inquiries about pagination.
+- **Chatbot Capabilities:** When asked about capabilities, explain without revealing the specific function names.
+- **Function Usage:** Utilize the appropriate functions based on user queries.
+
+## Available Tools
+- BLIBLIgetListProductByKeyword
+- getWeather
+- displayFlightStatus
+- searchFlights
+- selectSeats
+- createReservation
+- authorizePayment
+- verifyPayment
+- displayBoardingPass
+
       `,
-    messages: coreMessages,
+    messages: relevantMessages,
     tools: {
+      BLIBLIgetListProductByKeyword: {
+        description: "Search for products based on a keyword",
+        parameters: z.object({
+          category_code: z
+            .string()
+            .describe("Keyword to search for, example: Iphone 13"),
+          page: z
+            .number()
+            .default(1)
+            .describe(
+              "Pagination page to retrieve. Any positive number can be used; defaults to 1 if not specified.",
+            ),
+        }),
+        execute: async ({ category_code, page = 1 }) => {
+          const results = await fetch(`${blibliAPI}/getListProductByKeyword`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ category_code, page }),
+          });
+
+          // Wait for the response to be converted to JSON
+          const data = await results.json();
+          return { data: data.data }; // Return the JSON data
+        },
+      },
+
       getWeather: {
         description: "Get the current weather at a location",
         parameters: z.object({

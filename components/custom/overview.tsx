@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
+import { ShoppingCart, BarChart, TrendingUp } from "lucide-react";
 import Link from "next/link";
-
-import { LogoGoogle, MessageIcon, VercelIcon } from "./icons";
 
 export const Overview = () => {
   return (
@@ -15,33 +14,24 @@ export const Overview = () => {
     >
       <div className="border-none bg-muted/50 rounded-2xl p-6 flex flex-col gap-4 text-zinc-500 text-sm dark:text-zinc-400 dark:border-zinc-700">
         <p className="flex flex-row justify-center gap-4 items-center text-zinc-900 dark:text-zinc-50">
-          <VercelIcon />
+          <ShoppingCart />
           <span>+</span>
-          <MessageIcon />
+          <BarChart />
+          <span>+</span>
+          <TrendingUp />
         </p>
         <p>
-          This is an open source Chatbot template powered by the Google Gemini
-          model built with Next.js and the AI SDK by Vercel. It uses the{" "}
-          <code className="rounded-sm bg-muted-foreground/15 px-1.5 py-0.5">
-            streamText
-          </code>{" "}
-          function in the server and the{" "}
-          <code className="rounded-sm bg-muted-foreground/15 px-1.5 py-0.5">
-            useChat
-          </code>{" "}
-          hook on the client to create a seamless chat experience.
+          Welcome to <strong>CIP-CIP</strong>—your dedicated e-commerce
+          analytics assistant. CIP-CIP is designed to provide you with
+          data-driven insights, actionable recommendations, and comprehensive
+          analyses to help make informed business decisions.
         </p>
         <p>
-          {" "}
-          You can learn more about the AI SDK by visiting the{" "}
-          <Link
-            className="text-blue-500 dark:text-blue-400"
-            href="https://sdk.vercel.ai/docs"
-            target="_blank"
-          >
-            Docs
-          </Link>
-          .
+          Powered by advanced analytics and a robust toolkit, CIP-CIP can help
+          you analyze trends, understand consumer behavior, and uncover growth
+          opportunities in the e-commerce space. Get started by exploring
+          CIP-CIP's capabilities and seeing how it can streamline your
+          e-commerce analysis.
         </p>
       </div>
     </motion.div>

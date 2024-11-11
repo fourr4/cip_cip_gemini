@@ -1,72 +1,94 @@
-import Link from "next/link";
-import React, { memo } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+
+import React, { memo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import Link from 'next/link';
 
 const NonMemoizedMarkdown = ({ children }: { children: string }) => {
   const components = {
+    // Code blocks and inline code
     code: ({ node, inline, className, children, ...props }: any) => {
-      const match = /language-(\w+)/.exec(className || "");
-      return !inline && match ? (
-        <pre
-          {...props}
-          className={`${className} text-sm w-[80dvw] md:max-w-[500px] overflow-x-scroll bg-zinc-100 p-3 rounded-lg mt-2 dark:bg-zinc-800`}
-        >
-          <code className={match[1]}>{children}</code>
+      return !inline ? (
+        <pre className="my-4 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-x-auto">
+          <code className={className} {...props}>
+            {children}
+          </code>
         </pre>
       ) : (
         <code
-          className={`${className} text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1 rounded-md`}
+          className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded text-sm"
           {...props}
         >
           {children}
         </code>
       );
     },
-    ol: ({ node, children, ...props }: any) => {
-      return (
-        <ol className="list-decimal list-outside ml-4" {...props}>
+
+    // Lists
+    ul: ({ children }: any) => (
+      <ul className="list-disc list-outside ml-6 my-4">
+        {children}
+      </ul>
+    ),
+    ol: ({ children }: any) => (
+      <ol className="list-decimal list-outside ml-6 my-4">
+        {children}
+      </ol>
+    ),
+    li: ({ children }: any) => (
+      <li className="my-2">{children}</li>
+    ),
+
+    // Block elements
+    p: ({ children }: any) => (
+      <p className="my-4">{children}</p>
+    ),
+    blockquote: ({ children }: any) => (
+      <blockquote className="border-l-4 border-zinc-300 dark:border-zinc-700 pl-4 my-4 italic">
+        {children}
+      </blockquote>
+    ),
+
+    // Inline elements
+    strong: ({ children }: any) => (
+      <strong className="font-semibold">{children}</strong>
+    ),
+    a: ({ href, children }: any) => (
+      <Link 
+        href={href} 
+        className="text-blue-500 hover:underline"
+        target={href.startsWith('http') ? '_blank' : undefined}
+        rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+      >
+        {children}
+      </Link>
+    ),
+
+    // Tables
+    table: ({ children }: any) => (
+      <div className="overflow-x-auto my-4">
+        <table className="min-w-full border-collapse border border-zinc-200 dark:border-zinc-700">
           {children}
-        </ol>
-      );
-    },
-    li: ({ node, children, ...props }: any) => {
-      return (
-        <li className="py-1" {...props}>
-          {children}
-        </li>
-      );
-    },
-    ul: ({ node, children, ...props }: any) => {
-      return (
-        <ul className="list-decimal list-outside ml-4" {...props}>
-          {children}
-        </ul>
-      );
-    },
-    strong: ({ node, children, ...props }: any) => {
-      return (
-        <span className="font-semibold" {...props}>
-          {children}
-        </span>
-      );
-    },
-    a: ({ node, children, ...props }: any) => {
-      return (
-        <Link
-          className="text-blue-500 hover:underline"
-          target="_blank"
-          rel="noreferrer"
-          {...props}
-        >
-          {children}
-        </Link>
-      );
-    },
+        </table>
+      </div>
+    ),
+    th: ({ children }: any) => (
+      <th className="border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-left">
+        {children}
+      </th>
+    ),
+    td: ({ children }: any) => (
+      <td className="border border-zinc-200 dark:border-zinc-700 px-4 py-2">
+        {children}
+      </td>
+    ),
   };
 
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+    <ReactMarkdown 
+      remarkPlugins={[remarkGfm]} 
+      components={components}
+    >
       {children}
     </ReactMarkdown>
   );
@@ -74,5 +96,7 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
 
 export const Markdown = memo(
   NonMemoizedMarkdown,
-  (prevProps, nextProps) => prevProps.children === nextProps.children,
+  (prevProps, nextProps) => prevProps.children === nextProps.children
 );
+
+export default Markdown;
