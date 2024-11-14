@@ -98,58 +98,106 @@ export async function getChatById({ id }: { id: string }) {
     throw error;
   }
 }
-
-export async function deleteMessageByRow(chatId: string, rowIndex: number) {
+function safeJSONParse(str: string) {
   try {
-    const chatData = await getChatById({ id: chatId });
+    // Only parse if it's a string, otherwise return the value directly
+    return typeof str === "string" ? JSON.parse(str) : str;
+  } catch (error) {
+    console.error("Failed to parse JSON:", str);
+    return null;
+  }
+}
 
-    if (chatData) {
-      const updatedMessages = chatData.messages.filter(
-        (_: Message, index: number) => index !== rowIndex,
-      );
+export async function editChatMessage({
+  chatId,
+  messageIndex,
+  newContent,
+}: {
+  chatId: string;
+  messageIndex: number;
+  newContent: string;
+}) {
+  try {
+    const [chatRecord] = await db
+      .select()
+      .from(chat)
+      .where(eq(chat.id, chatId));
+
+    if (!chatRecord) {
+      throw new Error("Chat not found");
+    }
+
+    console.log("Chat record:", chatRecord);
+
+    // Directly handle the messages as parsed objects
+    const messages = safeJSONParse(chatRecord.messages);
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error("Invalid message format");
+    }
+
+    if (messages.length > messageIndex) {
+      messages[messageIndex].content = newContent;
 
       await db
         .update(chat)
-        .set({ messages: JSON.stringify(updatedMessages) })
+        .set({
+          messages: JSON.stringify(messages), // Store the updated messages as a string
+        })
         .where(eq(chat.id, chatId));
 
-      return updatedMessages;
+      return { success: true };
+    } else {
+      throw new Error("Message index out of bounds");
     }
-
-    throw new Error("Chat not found");
   } catch (error) {
-    console.error("Failed to delete message by row");
+    console.error("Failed to edit chat message", error);
     throw error;
   }
 }
 
-export async function editMessageByRow(
-  chatId: string,
-  rowIndex: number,
-  newContent: string,
-) {
+export async function deleteChatMessage({
+  chatId,
+  messageIndex,
+}: {
+  chatId: string;
+  messageIndex: number;
+}) {
   try {
-    const chatData = await getChatById({ id: chatId });
+    // Fetch the chat record from the database
+    const [chatRecord] = await db
+      .select()
+      .from(chat)
+      .where(eq(chat.id, chatId));
 
-    if (chatData) {
-      const updatedMessages = chatData.messages.map((message, index) => {
-        if (index === rowIndex && message.role !== "resetcontext") {
-          return { ...message, content: newContent };
-        }
-        return message;
-      });
-
-      await db
-        .update(chat)
-        .set({ messages: JSON.stringify(updatedMessages) })
-        .where(eq(chat.id, chatId));
-
-      return updatedMessages;
+    if (!chatRecord) {
+      throw new Error("Chat not found");
     }
 
-    throw new Error("Chat not found");
+    // Parse the messages JSON to handle complex structures
+    const messages = safeJSONParse(chatRecord.messages);
+    if (!messages || !Array.isArray(messages)) {
+      throw new Error("Invalid message format");
+    }
+
+    // Check if the specified index is within bounds
+    if (messageIndex < 0 || messageIndex >= messages.length) {
+      throw new Error("Message index out of bounds");
+    }
+
+    // Delete the message at the specified index, including 'tool' or other roles
+    messages.splice(messageIndex, 1);
+
+    // Update the database with the modified messages array
+    await db
+      .update(chat)
+      .set({
+        messages: JSON.stringify(messages), // Serialize back to JSON string
+      })
+      .where(eq(chat.id, chatId));
+
+    return { success: true };
   } catch (error) {
-    console.error("Failed to edit message by row");
+    console.error("Failed to delete chat message", error);
     throw error;
   }
 }

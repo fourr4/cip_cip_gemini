@@ -217,7 +217,7 @@ export function MultimodalInput({
             <FiRefreshCw size={14} />
           </Button>
 
-          <Button
+          {/* <Button
             className="rounded-full p-1.5 h-8 w-8 flex items-center justify-center dark:border-zinc-700"
             onClick={(event) => {
               event.preventDefault();
@@ -227,7 +227,7 @@ export function MultimodalInput({
             disabled={isLoading}
           >
             <PaperclipIcon size={14} />
-          </Button>
+          </Button> */}
 
           {isLoading ? (
             <Button

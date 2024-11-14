@@ -1,40 +1,74 @@
-"use client";
-
-import { Attachment, ToolInvocation } from "ai";
+import { Attachment, Message as AIMessage, ToolInvocation } from "ai";
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
-
+import { ReactNode, useState } from "react";
 import { BotIcon, UserIcon } from "./icons";
 import { Markdown } from "./markdown";
 import { PreviewAttachment } from "./preview-attachment";
-import { Weather } from "./weather";
 import { DownloadData } from "./download";
-import { AuthorizePayment } from "../flights/authorize-payment";
-import { DisplayBoardingPass } from "../flights/boarding-pass";
-import { CreateReservation } from "../flights/create-reservation";
-import { FlightStatus } from "../flights/flight-status";
-import { ListFlights } from "../flights/list-flights";
-import { SelectSeats } from "../flights/select-seats";
-import { VerifyPayment } from "../flights/verify-payment";
-export const Message = ({
-  chatId,
-  role,
-  content,
-  toolInvocations,
-  attachments,
-}: {
+import { Pencil, Trash2, X, Check } from "lucide-react";
+
+interface MessageProps {
   chatId: string;
   role: string;
   content: string | ReactNode;
   toolInvocations: Array<ToolInvocation> | undefined;
   attachments?: Array<Attachment>;
+  messageIndex: number;
+}
+
+export const Message: React.FC<MessageProps> = ({
+  chatId,
+  role,
+  content,
+  toolInvocations,
+  attachments,
+  messageIndex,
 }) => {
-  const isLoading =
-    toolInvocations &&
-    toolInvocations.some((inv) => {
-      // Assuming the states are "partial-call", "call", "result"
-      return inv.state === "partial-call" || inv.state === "call"; // Modify as needed
-    });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(content as string);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleMessageUpdate = async (action: "edit" | "delete") => {
+    if (
+      action === "delete" &&
+      !confirm("Are you sure you want to delete this message?")
+    ) {
+      return;
+    }
+
+    setIsLoading(true);
+    const url = "/api/roomchat";
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          chatId,
+          messageIndex,
+          newContent: action === "edit" ? editedContent : undefined,
+        }),
+      });
+
+      if (response.ok) {
+        if (action === "edit") {
+          setIsEditing(false);
+        }
+        window.location.reload();
+      } else {
+        const error = await response.text();
+        alert(`Failed to ${action} message: ${error}`);
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} message:`, error);
+      alert(`Failed to ${action} message. Please try again.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (role === "user" && content === "resetcontext") {
     return (
@@ -48,31 +82,82 @@ export const Message = ({
     );
   }
 
+  if (
+    toolInvocations &&
+    toolInvocations.some((inv) => {
+      return inv.state === "partial-call" || inv.state === "call";
+    })
+  ) {
+    return (
+      <div className="flex flex-row gap-4 px-4 w-full md:w-[500px] md:px-0">
+        <div className="size-[24px] border rounded-sm p-1 flex flex-col justify-center items-center shrink-0 text-zinc-500">
+          <BotIcon />
+        </div>
+        <div className="w-full h-8 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`flex flex-row gap-4 px-4 w-full md:w-[500px] md:px-0 first-of-type:pt-20`}
-    >
+    <div className="flex flex-row gap-4 px-4 w-full md:w-[500px] md:px-0 first-of-type:pt-20 relative group">
       <div className="size-[24px] border rounded-sm p-1 flex flex-col justify-center items-center shrink-0 text-zinc-500">
         {role === "assistant" ? <BotIcon /> : <UserIcon />}
       </div>
 
       <div className="flex flex-col gap-2 w-full">
-        {isLoading ? (
-          <div
-            style={{
-              height: "20px",
-              backgroundColor: "#e0e0e0",
-              borderRadius: "4px",
-              margin: "4px 0",
-              animation: "pulse 1.5s infinite",
-              opacity: 1,
-            }}
-          />
-        ) : content && typeof content === "string" ? (
-          <div className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
-            <Markdown>{content}</Markdown>
+        <div className="absolute left-[-65px] top-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 bg-white dark:bg-zinc-800 p-1 rounded-lg shadow-sm">
+          {role === "user" && content !== "resetcontext" && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1.5 text-blue-500 hover:bg-blue-100 rounded-md dark:hover:bg-blue-900/20 disabled:opacity-50"
+              disabled={isLoading}
+              title="Edit message"
+            >
+              <Pencil size={16} />
+            </button>
+          )}
+          <button
+            onClick={() => handleMessageUpdate("delete")}
+            className="p-1.5 text-red-500 hover:bg-red-100 rounded-md dark:hover:bg-red-900/20 disabled:opacity-50"
+            disabled={isLoading}
+            title="Delete message"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+
+        {isEditing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="w-full p-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700 min-h-[100px]"
+              disabled={isLoading}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleMessageUpdate("edit")}
+                className="p-1.5 text-green-500 hover:bg-green-100 rounded-md dark:hover:bg-green-900/20 disabled:opacity-50"
+                disabled={isLoading}
+                title="Save changes"
+              >
+                <Check size={16} />
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="p-1.5 text-red-500 hover:bg-red-100 rounded-md dark:hover:bg-red-900/20 disabled:opacity-50"
+                disabled={isLoading}
+                title="Cancel editing"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="text-zinc-800 dark:text-zinc-300 flex flex-col gap-4">
+            <Markdown>{content as string}</Markdown>
+          </div>
+        )}
 
         {toolInvocations && (
           <div className="flex flex-col gap-4">
@@ -84,26 +169,16 @@ export const Message = ({
 
                 return (
                   <div key={toolCallId}>
-                    {toolName === "getWeather" ? (
-                      <Weather weatherAtLocation={result} />
-                    ) : toolName === "displayFlightStatus" ? (
-                      <FlightStatus flightStatus={result} />
-                    ) : toolName === "searchFlights" ? (
-                      <ListFlights chatId={chatId} results={result} />
-                    ) : toolName === "selectSeats" ? (
-                      <SelectSeats chatId={chatId} availability={result} />
-                    ) : toolName === "createReservation" ? (
-                      Object.keys(result).includes("error") ? null : (
-                        <CreateReservation reservation={result} />
-                      )
-                    ) : toolName === "authorizePayment" ? (
-                      <AuthorizePayment intent={result} />
-                    ) : toolName === "displayBoardingPass" ? (
-                      <DisplayBoardingPass boardingPass={result} />
-                    ) : toolName === "verifyPayment" ? (
-                      <VerifyPayment result={result} />
-                    ) : toolName === "BLIBLIgetListProductByKeyword" ? ( // Tambahkan case untuk downloadData
+                    {toolName === "BLIBLIgetListProductByKeyword" ? (
                       <DownloadData data={result} isLoading={false} />
+                    ) : toolName === "BLIBLIgetListSellerByKeyword" ? (
+                      <DownloadData data={result} />
+                    ) : toolName === "BLIBLIgetProductDetail" ? (
+                      <DownloadData data={result} />
+                    ) : toolName === "BLIBLIgetSellerDetail" ? (
+                      <DownloadData data={result} />
+                    ) : toolName === "BLIBLIgetListProductBySeller" ? (
+                      <DownloadData data={result} />
                     ) : (
                       <div>{JSON.stringify(result, null, 2)}</div>
                     )}
@@ -112,21 +187,15 @@ export const Message = ({
               } else {
                 return (
                   <div key={toolCallId} className="skeleton">
-                    {toolName === "getWeather" ? (
-                      <Weather />
-                    ) : toolName === "displayFlightStatus" ? (
-                      <FlightStatus />
-                    ) : toolName === "searchFlights" ? (
-                      <ListFlights chatId={chatId} />
-                    ) : toolName === "selectSeats" ? (
-                      <SelectSeats chatId={chatId} />
-                    ) : toolName === "createReservation" ? (
-                      <CreateReservation />
-                    ) : toolName === "authorizePayment" ? (
-                      <AuthorizePayment />
-                    ) : toolName === "displayBoardingPass" ? (
-                      <DisplayBoardingPass />
-                    ) : toolName === "BLIBLIgetListProductByKeyword" ? ( // Tambahkan case untuk skeleton
+                    {toolName === "BLIBLIgetListProductByKeyword" ? (
+                      <DownloadData isLoading={true} />
+                    ) : toolName === "BLIBLIgetListSellerByKeyword" ? (
+                      <DownloadData isLoading={true} />
+                    ) : toolName === "BLIBLIgetProductDetail" ? (
+                      <DownloadData isLoading={true} />
+                    ) : toolName === "BLIBLIgetSellerDetail" ? (
+                      <DownloadData isLoading={true} />
+                    ) : toolName === "BLIBLIgetListProductBySeller" ? (
                       <DownloadData isLoading={true} />
                     ) : null}
                   </div>

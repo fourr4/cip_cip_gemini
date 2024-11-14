@@ -42,7 +42,7 @@ export function Chat({
         >
           {messages.length === 0 && <Overview />}
 
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <PreviewMessage
               key={message.id}
               chatId={id}
@@ -50,6 +50,7 @@ export function Chat({
               content={message.content}
               attachments={message.experimental_attachments}
               toolInvocations={message.toolInvocations}
+              messageIndex={index} // Menambahkan messageIndex saat merender pesan
             />
           ))}
 

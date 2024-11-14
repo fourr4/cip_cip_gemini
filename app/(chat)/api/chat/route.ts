@@ -2,12 +2,6 @@ import { convertToCoreMessages, Message, streamText } from "ai";
 import { z } from "zod";
 
 import { geminiFlashModel } from "@/ai";
-import {
-  generateReservationPrice,
-  generateSampleFlightSearchResults,
-  generateSampleFlightStatus,
-  generateSampleSeatSelection,
-} from "@/ai/actions";
 import { auth } from "@/app/(auth)/auth";
 import {
   createReservation,
@@ -18,7 +12,7 @@ import {
 } from "@/db/queries";
 import { generateUUID } from "@/lib/utils";
 
-const blibliAPI = "http://103.127.135.182:8000";
+const blibliAPI = "http://100.80.37.91:8000";
 
 export async function POST(request: Request) {
   const { id, messages }: { id: string; messages: Array<Message> } =
@@ -73,15 +67,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
 
 ## Available Tools
 - BLIBLIgetListProductByKeyword
-- getWeather
-- displayFlightStatus
-- searchFlights
-- selectSeats
-- createReservation
-- authorizePayment
-- verifyPayment
-- displayBoardingPass
-
+- BLIBLIgetListSellerByKeyword
       `,
     messages: relevantMessages,
     tools: {
@@ -112,163 +98,75 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
           return { data: data.data }; // Return the JSON data
         },
       },
-
-      getWeather: {
-        description: "Get the current weather at a location",
+      BLIBLIgetListSellerByKeyword: {
+        description: "Search for sellers based on a keyword",
         parameters: z.object({
-          latitude: z.number().describe("Latitude coordinate"),
-          longitude: z.number().describe("Longitude coordinate"),
+          keyword_seller: z.string().describe("Keyword to search for"),
+          page: z.number().default(1).describe("Pagination page to retrieve"),
         }),
-        execute: async ({ latitude, longitude }) => {
-          const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&hourly=temperature_2m&daily=sunrise,sunset&timezone=auto`,
-          );
-
-          const weatherData = await response.json();
-          return weatherData;
-        },
-      },
-      displayFlightStatus: {
-        description: "Display the status of a flight",
-        parameters: z.object({
-          flightNumber: z.string().describe("Flight number"),
-          date: z.string().describe("Date of the flight"),
-        }),
-        execute: async ({ flightNumber, date }) => {
-          const flightStatus = await generateSampleFlightStatus({
-            flightNumber,
-            date,
+        execute: async ({ keyword_seller, page = 1 }) => {
+          const results = await fetch(`${blibliAPI}/getListSeller`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ keyword_seller, page }),
           });
-
-          return flightStatus;
+          const data = await results.json();
+          console.log(data);
+          return { data: data };
         },
       },
-      searchFlights: {
-        description: "Search for flights based on the given parameters",
+      BLIBLIgetProductDetail: {
+        description: "Get product details based on the product URL",
         parameters: z.object({
-          origin: z.string().describe("Origin airport or city"),
-          destination: z.string().describe("Destination airport or city"),
+          URL: z.string().describe("URL of the product"),
         }),
-        execute: async ({ origin, destination }) => {
-          const results = await generateSampleFlightSearchResults({
-            origin,
-            destination,
+        execute: async ({ URL }) => {
+          const results = await fetch(`${blibliAPI}/getDetailProduct`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ URL }),
           });
-
-          return results;
+          const data = await results.json();
+          return { data: data };
         },
       },
-      selectSeats: {
-        description: "Select seats for a flight",
+      BLIBLIgetSellerDetail: {
+        description: "Get seller details based on the seller Name",
         parameters: z.object({
-          flightNumber: z.string().describe("Flight number"),
+          namaToko: z.string().describe("Name of the seller"),
         }),
-        execute: async ({ flightNumber }) => {
-          const seats = await generateSampleSeatSelection({ flightNumber });
-          return seats;
+        execute: async ({ namaToko }) => {
+          const results = await fetch(`${blibliAPI}/getInfoShop`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ namaToko }),
+          });
+          const data = await results.json();
+          return { data: data };
         },
       },
-      createReservation: {
-        description: "Display pending reservation details",
+      BLIBLIgetListProductBySeller: {
+        description: "Get list of products based on the seller Name",
         parameters: z.object({
-          seats: z.string().array().describe("Array of selected seat numbers"),
-          flightNumber: z.string().describe("Flight number"),
-          departure: z.object({
-            cityName: z.string().describe("Name of the departure city"),
-            airportCode: z.string().describe("Code of the departure airport"),
-            timestamp: z.string().describe("ISO 8601 date of departure"),
-            gate: z.string().describe("Departure gate"),
-            terminal: z.string().describe("Departure terminal"),
-          }),
-          arrival: z.object({
-            cityName: z.string().describe("Name of the arrival city"),
-            airportCode: z.string().describe("Code of the arrival airport"),
-            timestamp: z.string().describe("ISO 8601 date of arrival"),
-            gate: z.string().describe("Arrival gate"),
-            terminal: z.string().describe("Arrival terminal"),
-          }),
-          passengerName: z.string().describe("Name of the passenger"),
+          namaToko: z.string().describe("Name of the seller"),
+          page: z.number().default(1).describe("Pagination page to retrieve"),
         }),
-        execute: async (props) => {
-          const { totalPriceInUSD } = await generateReservationPrice(props);
-          const session = await auth();
-
-          const id = generateUUID();
-
-          if (session && session.user && session.user.id) {
-            await createReservation({
-              id,
-              userId: session.user.id,
-              details: { ...props, totalPriceInUSD },
-            });
-
-            return { id, ...props, totalPriceInUSD };
-          } else {
-            return {
-              error: "User is not signed in to perform this action!",
-            };
-          }
-        },
-      },
-      authorizePayment: {
-        description:
-          "User will enter credentials to authorize payment, wait for user to repond when they are done",
-        parameters: z.object({
-          reservationId: z
-            .string()
-            .describe("Unique identifier for the reservation"),
-        }),
-        execute: async ({ reservationId }) => {
-          return { reservationId };
-        },
-      },
-      verifyPayment: {
-        description: "Verify payment status",
-        parameters: z.object({
-          reservationId: z
-            .string()
-            .describe("Unique identifier for the reservation"),
-        }),
-        execute: async ({ reservationId }) => {
-          const reservation = await getReservationById({ id: reservationId });
-
-          if (reservation.hasCompletedPayment) {
-            return { hasCompletedPayment: true };
-          } else {
-            return { hasCompletedPayment: false };
-          }
-        },
-      },
-      displayBoardingPass: {
-        description: "Display a boarding pass",
-        parameters: z.object({
-          reservationId: z
-            .string()
-            .describe("Unique identifier for the reservation"),
-          passengerName: z
-            .string()
-            .describe("Name of the passenger, in title case"),
-          flightNumber: z.string().describe("Flight number"),
-          seat: z.string().describe("Seat number"),
-          departure: z.object({
-            cityName: z.string().describe("Name of the departure city"),
-            airportCode: z.string().describe("Code of the departure airport"),
-            airportName: z.string().describe("Name of the departure airport"),
-            timestamp: z.string().describe("ISO 8601 date of departure"),
-            terminal: z.string().describe("Departure terminal"),
-            gate: z.string().describe("Departure gate"),
-          }),
-          arrival: z.object({
-            cityName: z.string().describe("Name of the arrival city"),
-            airportCode: z.string().describe("Code of the arrival airport"),
-            airportName: z.string().describe("Name of the arrival airport"),
-            timestamp: z.string().describe("ISO 8601 date of arrival"),
-            terminal: z.string().describe("Arrival terminal"),
-            gate: z.string().describe("Arrival gate"),
-          }),
-        }),
-        execute: async (boardingPass) => {
-          return boardingPass;
+        execute: async ({ namaToko, page = 1 }) => {
+          const results = await fetch(`${blibliAPI}/getListProductByShop`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ namaToko, page }),
+          });
+          const data = await results.json();
+          return { data: data };
         },
       },
     },
