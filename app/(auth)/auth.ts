@@ -2,13 +2,35 @@ import { compare } from "bcrypt-ts";
 import NextAuth, { User, Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
-import { getUser } from "@/db/queries";
+import { getUser, getInfoUser } from "@/db/queries";
 
 import { authConfig } from "./auth.config";
 
 interface ExtendedSession extends Session {
   user: User;
 }
+
+export async function getInfo(email: string): Promise<Array<User>> {
+  try {
+    const users = await getInfoUser(email);
+    
+    // Iterate through the users array and remove password from each user object
+    users.forEach(user => {
+      if (user.password) {
+        // @ts-ignore
+        delete user.password;
+      }
+    });
+
+    // Return as object
+    return users
+
+  } catch (error) {
+    console.error("Failed to get user from database");
+    throw error;
+  }
+}
+
 
 export const {
   handlers: { GET, POST },

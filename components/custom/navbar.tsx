@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
-import { auth, signOut } from "@/app/(auth)/auth";
-
+import { auth, signOut, getInfo } from "@/app/(auth)/auth";
 import { History } from "./history";
 import { SlashIcon } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
@@ -16,6 +14,25 @@ import {
 
 export const Navbar = async () => {
   let session = await auth();
+  let accountType
+  // Ensure session exists before attempting to access user info
+  if (session?.user?.email) {
+    const users = await getInfo(session.user.email);
+
+    // Ensure there is at least one user before accessing accountType
+    if (users.length > 0) {
+      // @ts-ignore
+      accountType = users[0].accountType;
+
+      // Adjust the account type based on the value
+      accountType = accountType ? "pro" : "basic";
+    } else {
+      // Handle case when no user is returned
+      console.error("No user found.");
+    }
+  } else {
+    console.error("No session or user email found.");
+  }
 
   return (
     <>
@@ -32,12 +49,22 @@ export const Navbar = async () => {
             <div className="text-zinc-500">
               <SlashIcon size={16} />
             </div>
-            <div className="text-sm dark:text-zinc-300 truncate w-28 md:w-fit">
-              Chatbot E-Commerce Analyst
+            <div className="flex items-center gap-2">
+              <div className="text-sm dark:text-zinc-300 truncate w-28 md:w-fit">
+                Chatbot E-Commerce Analyst
+              </div>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  accountType === "pro"
+                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                    : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {accountType}
+              </span>
             </div>
           </div>
         </div>
-
         {session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -57,7 +84,6 @@ export const Navbar = async () => {
                   className="w-full"
                   action={async () => {
                     "use server";
-
                     await signOut({
                       redirectTo: "/",
                     });

@@ -13,9 +13,11 @@ import { Overview } from "./overview";
 export function Chat({
   id,
   initialMessages,
+  accountType,
 }: {
   id: string;
   initialMessages: Array<Message>;
+  accountType: string;
 }) {
   const { messages, handleSubmit, input, setInput, append, isLoading, stop } =
     useChat({
@@ -51,6 +53,7 @@ export function Chat({
               attachments={message.experimental_attachments}
               toolInvocations={message.toolInvocations}
               messageIndex={index} // Menambahkan messageIndex saat merender pesan
+              accountType={accountType}
             />
           ))}
 

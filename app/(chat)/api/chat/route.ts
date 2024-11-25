@@ -64,7 +64,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
 - **Default Page:** If the user doesn’t specify a page, default to page 1 and avoid further inquiries about pagination.
 - **Chatbot Capabilities:** When asked about capabilities, explain without revealing the specific function names.
 - **Function Usage:** Utilize the appropriate functions based on user queries.
-
+- If model use tools and get the data from the API, please analyze the data and provide insights based on the data.
 ## Available Tools
 - BLIBLIgetListProductByKeyword
 - BLIBLIgetListSellerByKeyword
@@ -169,6 +169,110 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
           return { data: data };
         },
       },
+      TOKOPEDIAgetListSellerByKeyword: {
+        description: "Search for sellers based on a keyword for Tokopedia",
+        parameters: z.object({
+          searchSellerList: z.string().describe("Keyword to search for"),
+          page: z.number().default(1).describe("Pagination page to retrieve"),
+        }),
+        execute: async ({ searchSellerList, page = 1 }) => {
+          const results = await fetch(`${blibliAPI}/seller`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ searchSellerList, page }),
+          });
+          const data = await results.json();
+          return { data: data };
+        },
+      },
+      TOKOPEDIAgetProductList:{
+        description: "Get list of products based on the keyword for Tokopedia",
+        parameters: z.object({
+          keyword: z.string().describe("Keyword to search for"),
+          page: z.number().default(1).describe("Pagination page to retrieve"),
+        }),
+        execute: async ({ keyword, page = 1 }) => {
+          const results = await fetch(`${blibliAPI}/productByKeyword`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ keyword, page }),
+          });
+          const data = await results.json();
+          return { data: data };
+        },
+      },
+      TOKOPEDIAgetShopDetail:{
+        description: "Get shop details based on the shop URL for Tokopedia",
+        parameters: z.object({
+          sellerURL: z.string().describe("Name of the shop"),
+        }),
+        execute: async ({ sellerURL }) => {
+          const results = await fetch(`${blibliAPI}/infoShop`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sellerURL }),
+          });
+          const data = await results.json();
+          return { data: data };
+        },
+      },
+      TOKOPEDIAgetProductDetail:{
+        description: "Get product details based on the product URL for Tokopedia",
+        parameters: z.object({
+          productURL: z.string().describe("URL of the product"),
+        }),
+        execute: async ({ productURL }) => {
+          const results = await fetch(`${blibliAPI}/productInfo`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ productURL }),
+          });
+          const data = await results.json();
+          return { data: data };
+        },
+      },
+      BLIBLI_getSentimentAnalysis: {
+        description: "Get sentiment analysis of the product",
+        parameters: z.object({
+          URL: z.string().describe("URL of the product"),
+        }),
+        execute: async ({ URL }) => {
+          const results = await fetch(`${blibliAPI}/sentiment_blibli`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ URL }),
+          });
+          const data = await results.json();
+          return { data: data };
+        },
+      },
+      TOKOPEDIA_getSentimentAnalysis: {
+        description: "Get sentiment analysis of the product",
+        parameters: z.object({
+          URL: z.string().describe("URL of the product"),
+        }),
+        execute: async ({ URL }) => {
+          const results = await fetch(`${blibliAPI}/sentiment_tokped`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ URL }),
+          });
+          const data = await results.json();
+          return { data: data };
+        },
+      }
     },
     onFinish: async ({ responseMessages }) => {
       if (session.user && session.user.id) {

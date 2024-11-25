@@ -1,6 +1,6 @@
 import { Attachment, Message as AIMessage, ToolInvocation } from "ai";
 import { motion } from "framer-motion";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { BotIcon, UserIcon } from "./icons";
 import { Markdown } from "./markdown";
 import { PreviewAttachment } from "./preview-attachment";
@@ -14,6 +14,7 @@ interface MessageProps {
   toolInvocations: Array<ToolInvocation> | undefined;
   attachments?: Array<Attachment>;
   messageIndex: number;
+  accountType: string;
 }
 
 export const Message: React.FC<MessageProps> = ({
@@ -23,10 +24,30 @@ export const Message: React.FC<MessageProps> = ({
   toolInvocations,
   attachments,
   messageIndex,
+  accountType
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content as string);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const MESSAGE_LIMIT = 5;
+
+  // Check message limit only for basic accounts
+   // 1. Menambahkan state untuk melacak perubahan messageIndex
+   const [messageCount, setMessageCount] = useState(messageIndex);
+
+   // 2. Memperbarui messageCount setiap kali messageIndex berubah
+   useEffect(() => {
+     setMessageCount(messageIndex); // Update messageCount ketika messageIndex berubah
+   }, [messageIndex]);
+ 
+   // 3. Menampilkan modal jika messageCount mencapai batas
+   useEffect(() => {
+     if (accountType === "basic" && messageCount >= MESSAGE_LIMIT) {
+       setIsModalOpen(true); // Modal akan muncul jika messageCount >= MESSAGE_LIMIT
+     }
+   }, [messageCount, accountType]);
 
   const handleMessageUpdate = async (action: "edit" | "delete") => {
     if (
@@ -106,7 +127,7 @@ export const Message: React.FC<MessageProps> = ({
 
       <div className="flex flex-col gap-2 w-full">
         <div className="absolute left-[-65px] top-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 bg-white dark:bg-zinc-800 p-1 rounded-lg shadow-sm">
-          {role === "user" && content !== "resetcontext" && (
+          {/* {role === "user" && content !== "resetcontext" && (
             <button
               onClick={() => setIsEditing(true)}
               className="p-1.5 text-blue-500 hover:bg-blue-100 rounded-md dark:hover:bg-blue-900/20 disabled:opacity-50"
@@ -115,15 +136,15 @@ export const Message: React.FC<MessageProps> = ({
             >
               <Pencil size={16} />
             </button>
-          )}
-          <button
+          )} */}
+          {/* <button
             onClick={() => handleMessageUpdate("delete")}
             className="p-1.5 text-red-500 hover:bg-red-100 rounded-md dark:hover:bg-red-900/20 disabled:opacity-50"
             disabled={isLoading}
             title="Delete message"
           >
             <Trash2 size={16} />
-          </button>
+          </button> */}
         </div>
 
         {isEditing ? (
@@ -179,6 +200,14 @@ export const Message: React.FC<MessageProps> = ({
                       <DownloadData data={result} />
                     ) : toolName === "BLIBLIgetListProductBySeller" ? (
                       <DownloadData data={result} />
+                    ) : toolName === "TOKOPEDIAgetListSellerByKeyword" ? (
+                      <DownloadData data={result} />
+                    ) :toolName === "TOKOPEDIAgetProductList" ? (
+                      <DownloadData data={result} />
+                    ) :toolName === "TOKOPEDIAgetShopDetail" ? (
+                      <DownloadData data={result} />
+                    ) :toolName === "TOKOPEDIAgetProductDetail" ? (
+                      <DownloadData data={result} />
                     ) : (
                       <div>{JSON.stringify(result, null, 2)}</div>
                     )}
@@ -197,6 +226,14 @@ export const Message: React.FC<MessageProps> = ({
                       <DownloadData isLoading={true} />
                     ) : toolName === "BLIBLIgetListProductBySeller" ? (
                       <DownloadData isLoading={true} />
+                    ) :toolName === "TOKOPEDIAgetListSellerByKeyword" ? (
+                      <DownloadData isLoading={true} />
+                    ) :toolName === "TOKOPEDIAgetProductList" ? (
+                      <DownloadData isLoading={true} />
+                    ) :toolName === "TOKOPEDIAgetShopDetail" ? (
+                      <DownloadData isLoading={true} />
+                    ) :toolName === "TOKOPEDIAgetProductDetail" ? (
+                      <DownloadData isLoading={true} />
                     ) : null}
                   </div>
                 );
@@ -213,6 +250,36 @@ export const Message: React.FC<MessageProps> = ({
           </div>
         )}
       </div>
+
+      {/* Modal for message limit (only shows for basic accounts) */}
+      {isModalOpen && (
+        <motion.div
+          className="fixed top-0 left-0 w-full h-full bg-opacity-50 bg-black flex justify-center items-center z-50"
+          onClick={() => {
+            setIsModalOpen(false);
+            window.location.href = '/';
+          }}
+        >
+          <motion.div
+            className="bg-white dark:bg-zinc-800 p-6 rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+          >
+            <h2>Message Limit Reached</h2>
+            <p>You've reached the limit of {MESSAGE_LIMIT} messages. To continue, start a new conversation or upgrade to Pro for unlimited access.</p>
+            <button
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all"
+            >
+              OK
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };

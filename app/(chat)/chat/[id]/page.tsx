@@ -1,7 +1,7 @@
 import { CoreMessage } from "ai";
 import { notFound } from "next/navigation";
 
-import { auth } from "@/app/(auth)/auth";
+import { auth,getInfo } from "@/app/(auth)/auth";
 import { Chat as PreviewChat } from "@/components/custom/chat";
 import { getChatById } from "@/db/queries";
 import { Chat } from "@/db/schema";
@@ -22,6 +22,17 @@ export default async function Page({ params }: { params: any }) {
   };
 
   const session = await auth();
+  // @ts-ignore
+  const users = await getInfo(session?.user?.email);
+  // @ts-ignore
+  let accountType = users[0].accountType;
+  if (accountType === false) {
+    accountType = "basic";
+  } else {
+    accountType = "pro";
+  }
+
+  console.log(accountType);
 
   if (!session || !session.user) {
     return notFound();
@@ -31,5 +42,5 @@ export default async function Page({ params }: { params: any }) {
     return notFound();
   }
 
-  return <PreviewChat id={chat.id} initialMessages={chat.messages} />;
+  return <PreviewChat id={chat.id} initialMessages={chat.messages} accountType={accountType} />;
 }

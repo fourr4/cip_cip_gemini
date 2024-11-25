@@ -22,14 +22,44 @@ export async function getUser(email: string): Promise<Array<User>> {
   }
 }
 
+export async function getInfoUser(email: string): Promise<Array<User>> {
+  try {
+
+    return await db.select().from(user).where(eq(user.email, email));
+  } catch (error) {
+    console.error("Failed to get user from database");
+    throw error;
+  }
+}
+
 export async function createUser(email: string, password: string) {
+  // Validasi input email dan password
+  if (!email || !password) {
+    throw new Error("Email and password are required.");
+  }
+
+  // Hash password dengan bcrypt
   let salt = genSaltSync(10);
   let hash = hashSync(password, salt);
 
   try {
-    return await db.insert(user).values({ email, password: hash });
+    // Default expiredAt adalah 30 hari dari tanggal saat ini
+    const expiredAt = new Date();
+    expiredAt.setDate(expiredAt.getDate() + 99);
+
+    // Insert data ke tabel User
+    const result = await db
+      .insert(user)
+      .values({
+        email,
+        password: hash,
+        expiredAt, // Berikan langsung sebagai Date, bukan string
+      })
+      .returning(); // Mengembalikan data yang diinsert untuk debugging atau kebutuhan lainnya
+
+    return result;
   } catch (error) {
-    console.error("Failed to create user in database");
+    console.error("Failed to create user in database:", error);
     throw error;
   }
 }
