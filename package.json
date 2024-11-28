@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "tsx db/migrate && next build",
-    "start": "next start",
+    "dev": "next dev -p 3442",
+    "build": "next build",
+    "start": "next start -p 3442",
     "lint": "next lint",
     "migration":"tsx db/migrate"
   },

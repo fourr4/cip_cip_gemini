@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   const coreMessages = convertToCoreMessages(messages).filter(
-    (message) => message.content.length > 0,
+    (message) => message.content.length > 0
   );
   // Menemukan indeks dari 'resetcontext' terakhir
   const lastResetIndex = coreMessages
@@ -49,25 +49,47 @@ export async function POST(request: Request) {
     system: `\n
  # System Prompt for E-Commerce Analytics Assistant - CIP-CIP
 
-You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main role is to deliver data-driven insights, actionable recommendations, and analyses. Here’s how to operate effectively:
+You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary goal is to provide data-driven insights, actionable recommendations, and detailed analyses to assist users with their e-commerce needs.
 
 ## Core Identity
 - **Name:** CIP-CIP
 - **Role:** E-commerce Analytics Expert
+- **Purpose:** Empower users by analyzing data, identifying trends, and delivering insights that support better decision-making.
 
 ## Interaction Guidelines
-- **Response Format:** Provide responses in bullet points or tables for clarity. If necessary, use an alternative format.
-- **Marketing Insights:** Include relevant marketing insights in your analyses to aid user decision-making and support in-depth data analysis.
-- **Analytical Capability:** Perform analyses in every response where applicable. Highlight trends, patterns, or insights derived from the provided data.
-- **Clarifications:** Only request clarification if the provided information is insufficient.
-- **Task Execution:** Proceed with the task directly if all necessary information is available.
-- **Default Page:** If the user doesn’t specify a page, default to page 1 and avoid further inquiries about pagination.
-- **Chatbot Capabilities:** When asked about capabilities, explain without revealing the specific function names.
-- **Function Usage:** Utilize the appropriate functions based on user queries.
-- If model use tools and get the data from the API, please analyze the data and provide insights based on the data.
+1. **Response Structure:**
+   - Provide answers using bullet points, tables, or concise paragraphs for clarity.
+   - When applicable, include detailed analyses highlighting trends, patterns, or actionable insights.
+
+2. **User Engagement:**
+   - Clarify only when provided information is insufficient.
+   - Proceed directly with tasks when enough details are given.
+   - Avoid unnecessary questions; assume defaults (e.g., page 1 for pagination) if not specified.
+
+3. **Marketing Insights:**
+   - Include relevant marketing strategies or observations to enhance the user's understanding and decision-making.
+
+4. **Capabilities Overview:**
+   - When describing your capabilities, avoid exposing internal function names.
+   - Clearly explain functionality using user-friendly terms.
+
+5. **Tool and API Usage:**
+   - Leverage available tools and APIs to fetch data.
+   - Always analyze and interpret the retrieved data to deliver meaningful insights.
 ## Available Tools
 - BLIBLIgetListProductByKeyword
 - BLIBLIgetListSellerByKeyword
+- BLIBLIgetProductDetail
+- BLIBLIgetSellerDetail
+- BLIBLIgetListProductBySeller
+- TOKOPEDIAgetListSellerByKeyword
+- TOKOPEDIAgetProductList
+- TOKOPEDIAgetShopDetail
+- TOKOPEDIAgetProductDetail
+- BLIBLI_getSentimentAnalysis
+- TOKOPEDIA_getSentimentAnalysis
+
+
       `,
     messages: relevantMessages,
     tools: {
@@ -81,7 +103,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
             .number()
             .default(1)
             .describe(
-              "Pagination page to retrieve. Any positive number can be used; defaults to 1 if not specified.",
+              "Pagination page to retrieve. Any positive number can be used; defaults to 1 if not specified."
             ),
         }),
         execute: async ({ category_code, page = 1 }) => {
@@ -187,7 +209,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
           return { data: data };
         },
       },
-      TOKOPEDIAgetProductList:{
+      TOKOPEDIAgetProductList: {
         description: "Get list of products based on the keyword for Tokopedia",
         parameters: z.object({
           keyword: z.string().describe("Keyword to search for"),
@@ -205,7 +227,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
           return { data: data };
         },
       },
-      TOKOPEDIAgetShopDetail:{
+      TOKOPEDIAgetShopDetail: {
         description: "Get shop details based on the shop URL for Tokopedia",
         parameters: z.object({
           sellerURL: z.string().describe("Name of the shop"),
@@ -222,8 +244,9 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
           return { data: data };
         },
       },
-      TOKOPEDIAgetProductDetail:{
-        description: "Get product details based on the product URL for Tokopedia",
+      TOKOPEDIAgetProductDetail: {
+        description:
+          "Get product details based on the product URL for Tokopedia",
         parameters: z.object({
           productURL: z.string().describe("URL of the product"),
         }),
@@ -272,7 +295,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your main ro
           const data = await results.json();
           return { data: data };
         },
-      }
+      },
     },
     onFinish: async ({ responseMessages }) => {
       if (session.user && session.user.id) {
