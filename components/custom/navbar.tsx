@@ -10,20 +10,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 
 export const Navbar = async () => {
   let session = await auth();
-  let accountType
+  let accountType;
+  
   // Ensure session exists before attempting to access user info
   if (session?.user?.email) {
     const users = await getInfo(session.user.email);
-
     // Ensure there is at least one user before accessing accountType
     if (users.length > 0) {
       // @ts-ignore
       accountType = users[0].accountType;
-
       // Adjust the account type based on the value
       accountType = accountType ? "pro" : "basic";
     } else {
@@ -65,6 +65,7 @@ export const Navbar = async () => {
             </div>
           </div>
         </div>
+        
         {session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -79,6 +80,22 @@ export const Navbar = async () => {
               <DropdownMenuItem>
                 <ThemeToggle />
               </DropdownMenuItem>
+              
+              {/* Upgrade Account button for basic accounts */}
+              {accountType === "basic" && (
+                <>
+                  <DropdownMenuItem>
+                    <Link 
+                      href="http://10.15.42.102:3441/payment" 
+                      className="w-full"
+                    >
+                      Upgrade Account
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              
               <DropdownMenuItem className="p-1 z-50">
                 <form
                   className="w-full"
