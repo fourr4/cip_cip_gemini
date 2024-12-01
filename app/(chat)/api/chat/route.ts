@@ -117,7 +117,8 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
 
           // Wait for the response to be converted to JSON
           const data = await results.json();
-          return { data: data.data }; // Return the JSON data
+          console.log(data)
+          return { data }; // Return the JSON data
         },
       },
       BLIBLIgetListSellerByKeyword: {
@@ -136,7 +137,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
           });
           const data = await results.json();
           console.log(data);
-          return { data: data };
+          return { data };
         },
       },
       BLIBLIgetProductDetail: {
@@ -153,7 +154,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ URL }),
           });
           const data = await results.json();
-          return { data: data };
+          return { data };
         },
       },
       BLIBLIgetSellerDetail: {
@@ -170,7 +171,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ namaToko }),
           });
           const data = await results.json();
-          return { data: data };
+          return { data };
         },
       },
       BLIBLIgetListProductBySeller: {
@@ -188,7 +189,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ namaToko, page }),
           });
           const data = await results.json();
-          return { data: data };
+          return { data };
         },
       },
       TOKOPEDIAgetListSellerByKeyword: {
@@ -206,7 +207,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ searchSellerList, page }),
           });
           const data = await results.json();
-          return { data: data };
+          return {  data };
         },
       },
       TOKOPEDIAgetProductList: {
@@ -224,7 +225,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ keyword, page }),
           });
           const data = await results.json();
-          return { data: data };
+          return { data };
         },
       },
       TOKOPEDIAgetShopDetail: {
@@ -241,7 +242,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ sellerURL }),
           });
           const data = await results.json();
-          return { data: data };
+          return { data };
         },
       },
       TOKOPEDIAgetProductDetail: {
@@ -259,7 +260,7 @@ You are an advanced e-commerce analytics assistant named 'CIP-CIP'. Your primary
             body: JSON.stringify({ productURL }),
           });
           const data = await results.json();
-          return { data: data };
+          return { data };
         },
       },
       BLIBLI_getSentimentAnalysis: {

@@ -90,11 +90,37 @@ const downloadAsJSON = (data: Record<string, any> | Array<any>) => {
 const downloadAsCSV = (data: Record<string, any> | Array<any>) => {
   const csvRows = [];
   
+  // Extract data if the data is wrapped in the 'data' key
+  if (data && 'data' in data) {
+    data = data['data'];
+  }
+
+  // Function to flatten nested objects
+  const flattenObject = (obj: Record<string, any>, prefix: string = '') => {
+    let result: Record<string, any> = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
+        const newKey = prefix ? `${prefix}_${key}` : key;
+        if (typeof value === 'object' && !Array.isArray(value)) {
+          Object.assign(result, flattenObject(value, newKey)); // Recursively flatten nested object
+        } else {
+          result[newKey] = value;
+        }
+      }
+    }
+    return result;
+  };
+
   if (Array.isArray(data)) {
     if (data.length > 0 && typeof data[0] === 'object') {
-      const headers = Object.keys(data[0]);
+      // Flatten each object and collect headers
+      const flattenedData = data.map(item => flattenObject(item));
+      const headers = Object.keys(flattenedData[0]);
       csvRows.push(headers.join(','));
-      data.forEach(item => {
+
+      // Add data rows
+      flattenedData.forEach(item => {
         const values = headers.map(header => {
           const value = item[header];
           return JSON.stringify(value ?? '').replace(/"/g, '""');
@@ -102,16 +128,19 @@ const downloadAsCSV = (data: Record<string, any> | Array<any>) => {
         csvRows.push(values.join(','));
       });
     } else {
+      // If data is not an array of objects, handle it simply
       csvRows.push('Value');
       data.forEach(item => {
         csvRows.push(JSON.stringify(item ?? '').replace(/"/g, '""'));
       });
     }
   } else {
-    const headers = Object.keys(data);
+    const flattenedData = flattenObject(data);
+    const headers = Object.keys(flattenedData);
     csvRows.push(headers.join(','));
+
     const values = headers.map(header => {
-      const value = data[header];
+      const value = flattenedData[header];
       return JSON.stringify(value ?? '').replace(/"/g, '""');
     });
     csvRows.push(values.join(','));
@@ -126,5 +155,6 @@ const downloadAsCSV = (data: Record<string, any> | Array<any>) => {
   a.click();
   URL.revokeObjectURL(url);
 };
+
 
 export default DownloadData;
