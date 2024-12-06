@@ -54,13 +54,13 @@ export const DownloadData: React.FC<DownloadProps> = ({ data, isLoading = false 
           <span>Download CSV</span>
         </button>
         
-        <button
+        {/* <button
           onClick={copyToClipboard}
           className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200 shadow-sm hover:shadow-md"
         >
           <Clipboard className="mr-2" size={18} />
           <span>Copy to Clipboard</span>
-        </button>
+        </button> */}
       </div>
 
       <div className="mt-6">

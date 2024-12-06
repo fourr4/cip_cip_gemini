@@ -40,12 +40,14 @@ export const Navbar = async () => {
         <div className="flex flex-row gap-3 items-center">
           <History user={session?.user} />
           <div className="flex flex-row gap-2 items-center">
-            <Image
-              src="/images/logo.png"
-              height={40}
-              width={40}
-              alt="ChaSA logo"
-            />
+          <Link href="http://10.15.42.102:3440">
+              <Image
+                src="/images/logo.png"
+                height={40}
+                width={40}
+                alt="ChaSA logo"
+              />
+            </Link>
             <div className="text-zinc-500">
               <SlashIcon size={16} />
             </div>
