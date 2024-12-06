@@ -10,15 +10,9 @@ import { SubmitButton } from "@/components/custom/submit-button";
 
 import { register, RegisterActionState } from "../actions";
 
-export default function Page() {
+export default function RegisterPage() {
   const router = useRouter();
-
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
-
-
   const [state, formAction] = useActionState<RegisterActionState, FormData>(
     register,
     {
@@ -40,30 +34,17 @@ export default function Page() {
   }, [state, router]);
 
   const handleSubmit = (formData: FormData) => {
-     if (password !== confirmPassword) {
-        setPasswordsMatch(false);
-        return;
-     }
-      setPasswordsMatch(true);
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
 
     setEmail(formData.get("email") as string);
-    // It's crucial to add password to formData if your backend expects it
-    formData.set("password", password)
     formAction(formData);
   };
-
-
- const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-    setPasswordsMatch(e.target.value === confirmPassword);
-  };
-
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfirmPassword(e.target.value);
-    setPasswordsMatch(e.target.value === password);
-  };
-
-
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -74,29 +55,7 @@ export default function Page() {
             Create an account with your email and password
           </p>
         </div>
-        <AuthForm action={handleSubmit} defaultEmail={email}>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={handlePasswordChange}
-             className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            required
-          />
-         <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={handleConfirmPasswordChange}
-            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-
-            required
-          />
-           {!passwordsMatch && (
-            <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
-          )}
-
-
+        <AuthForm action={handleSubmit} defaultEmail={email} isRegister={true}>
           <SubmitButton>Sign Up</SubmitButton>
           <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
             {"Already have an account? "}

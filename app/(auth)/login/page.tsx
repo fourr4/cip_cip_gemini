@@ -10,7 +10,7 @@ import { SubmitButton } from "@/components/custom/submit-button";
 
 import { login, LoginActionState } from "../actions";
 
-export default function Page() {
+export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -28,6 +28,7 @@ export default function Page() {
     } else if (state.status === "invalid_data") {
       toast.error("Failed validating your submission!");
     } else if (state.status === "success") {
+      toast.success("Login successful!");
       router.refresh();
     }
   }, [state.status, router]);
@@ -47,14 +48,14 @@ export default function Page() {
           </p>
         </div>
         <AuthForm action={handleSubmit} defaultEmail={email}>
-          <SubmitButton>Sign in</SubmitButton>
+          <SubmitButton>Sign In</SubmitButton>
           <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
             {"Don't have an account? "}
             <Link
               href="/register"
               className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
             >
-              Sign up
+              Sign Up
             </Link>
             {" for free."}
           </p>

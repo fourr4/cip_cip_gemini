@@ -5,13 +5,22 @@ export function AuthForm({
   action,
   children,
   defaultEmail = "",
+  isRegister = false, // Add a prop to differentiate register and login forms
 }: {
   action: any;
   children: React.ReactNode;
   defaultEmail?: string;
+  isRegister?: boolean;
 }) {
   return (
-    <form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        action(formData);
+      }}
+      className="flex flex-col gap-4 px-4 sm:px-16"
+    >
       <div className="flex flex-col gap-2">
         <Label
           htmlFor="email"
@@ -19,7 +28,6 @@ export function AuthForm({
         >
           Email Address
         </Label>
-
         <Input
           id="email"
           name="email"
@@ -37,7 +45,6 @@ export function AuthForm({
         >
           Password
         </Label>
-
         <Input
           id="password"
           name="password"
@@ -45,6 +52,24 @@ export function AuthForm({
           type="password"
           required
         />
+
+        {isRegister && (
+          <>
+            <Label
+              htmlFor="confirmPassword"
+              className="text-zinc-600 font-normal dark:text-zinc-400"
+            >
+              Confirm Password
+            </Label>
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              className="bg-muted text-md md:text-sm border-none"
+              type="password"
+              required
+            />
+          </>
+        )}
       </div>
 
       {children}
