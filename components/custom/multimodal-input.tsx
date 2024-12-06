@@ -173,7 +173,7 @@ export function MultimodalInput({
     //     id: (Date.now() + 1).toString(),
     //     role: "assistant",
     //     content:
-    //       "Hi! I'm CIP-CIP, your e-commerce analytics assistant. How can I help you today?",
+    //       "Hi! I'm ChaSA, your e-commerce analytics assistant. How can I help you today?",
     //   });
     // }, 100);
   }, [append]);

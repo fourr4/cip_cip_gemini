@@ -21,16 +21,16 @@ export const Overview = () => {
           <TrendingUp />
         </p>
         <p>
-          Welcome to <strong>CIP-CIP</strong>—your dedicated e-commerce
-          analytics assistant. CIP-CIP is designed to provide you with
+          Welcome to <strong>ChaSA</strong>—your dedicated e-commerce
+          analytics assistant. ChaSA is designed to provide you with
           data-driven insights, actionable recommendations, and comprehensive
           analyses to help make informed business decisions.
         </p>
         <p>
-          Powered by advanced analytics and a robust toolkit, CIP-CIP can help
+          Powered by advanced analytics and a robust toolkit, ChaSA can help
           you analyze trends, understand consumer behavior, and uncover growth
           opportunities in the e-commerce space. Get started by exploring
-          CIP-CIP's capabilities and seeing how it can streamline your
+          ChaSA's capabilities and seeing how it can streamline your
           e-commerce analysis.
         </p>
       </div>
