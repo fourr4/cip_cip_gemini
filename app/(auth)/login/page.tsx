@@ -59,6 +59,15 @@ export default function LoginPage() {
             </Link>
             {" for free."}
           </p>
+          <p className="text-center text-sm text-gray-600 mt-4 dark:text-zinc-400">
+            {"Forgot your password? "}
+            <Link
+              href="https://wa.link/uzahpc"
+              className="font-semibold text-gray-800 hover:underline dark:text-zinc-200"
+            >
+              Reset it here
+            </Link>
+          </p>
         </AuthForm>
       </div>
     </div>

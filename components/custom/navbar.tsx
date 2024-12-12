@@ -104,7 +104,7 @@ export const Navbar = async () => {
                   action={async () => {
                     "use server";
                     await signOut({
-                      redirectTo: "http://10.15.42.102:3440",
+                      redirectTo: "/",
                     });
                   }}
                 >
